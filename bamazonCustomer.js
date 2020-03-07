@@ -39,8 +39,67 @@ var connection = mysql.createConnection({
 clear();
 console.log(
     chalk.yellowBright(
-        figlet.textSync('BAMAZON', {
+        figlet.textSync('BAM!AZON', {
             horizontalLayout: "full"
         })
     )
 );
+
+function allItems() {
+    connection.query('SELECT * FROM products', function (error, results, fields) {
+        if (error) throw error;
+        console.log('\n');
+        console.log(chalk.blue.bgBlack.bold('Check out the goods!'));
+        for (let i = 0; i < results.length; i++) {
+            console.log('Item ID: ' + results[i].item_id);
+            console.log('Product: ' + results[i].product_name);
+            console.log('Price: $' + results[i].price);
+        }
+        connection.end();
+    });
+}
+
+function order() {
+    var questions = [{
+            type: 'number',
+            name: 'productID',
+            message: "What's the product ID?"
+        },
+        {
+            type: 'number',
+            name: 'qty',
+            message: "How many do you want?"
+        }
+    ];
+    inq.prompt(questions).then(answers => {
+        let stock = 0;
+        connection
+            .query('SELECT * FROM products WHERE item_id = ?', [answers.productID], function (error, res) {
+                if (error) throw error;
+                stock = res[0].stock_quantity;
+                if (stock < answers.qty) {
+                    console.log(chalk.redBright('Insufficent Stock'));
+                    connection.end();
+                } else {
+                    stockUpdate = stock - answers.qty;
+                    connection.query('UPDATE products SET ? WHERE ?', [{
+                        stock_quantity: stockUpdate
+                    },
+                    {
+                        item_id: answers.productID
+                    }
+                ], function (err, res) {
+                    if (err) throw err;
+                    console.log("Order Placed");
+                });
+                connection.end();
+                return stock;
+                }
+            });
+    });
+}
+
+connection.connect(function (err) {
+    if (err) throw err;
+    order();
+});
