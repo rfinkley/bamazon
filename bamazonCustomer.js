@@ -46,18 +46,14 @@ console.log(
 );
 
 function allItems() {
-    connection.query('SELECT * FROM products', function (error, results, fields) {
+    connection.query('SELECT * FROM products', function (error, results) {
         if (error) throw error;
         console.log('\n');
         console.log(chalk.blue.bgBlack.bold('Check out the goods!'));
-        for (let i = 0; i < results.length; i++) {
-            console.log('Item ID: ' + results[i].item_id);
-            console.log('Product: ' + results[i].product_name);
-            console.log('Price: $' + results[i].price);
-        }
+        console.table(results);
         connection.end();
-    });
-}
+        });
+    }
 
 function order() {
     var questions = [{
@@ -68,18 +64,17 @@ function order() {
         {
             type: 'number',
             name: 'qty',
-            message: "How many do you want?"
+            message: "How many do you want?",
         }
     ];
     inq.prompt(questions).then(answers => {
-        let stock = 0;
         connection
             .query('SELECT * FROM products WHERE item_id = ?', [answers.productID], function (error, res) {
                 if (error) throw error;
-                stock = res[0].stock_quantity;
+                let stock = res[0].stock_quantity;
                 if (stock < answers.qty) {
                     console.log(chalk.redBright('Insufficent Stock'));
-                    connection.end();
+                    allItems();
                 } else {
                     stockUpdate = stock - answers.qty;
                     connection.query('UPDATE products SET ? WHERE ?', [{
@@ -91,8 +86,8 @@ function order() {
                 ], function (err, res) {
                     if (err) throw err;
                     console.log("Order Placed");
+                    allItems();
                 });
-                connection.end();
                 return stock;
                 }
             });
