@@ -53,7 +53,7 @@ function start() {
         .then(function (answer) {
             // based on their answer, either call the bid or the post functions
             if (answer.option === "ORDER") {
-                order();
+                allItems();
             } else {
                 connection.end();
             }

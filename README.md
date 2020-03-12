@@ -48,4 +48,4 @@ UCF Bootcamp Homework - Build a node cli app called Bamazon
 
 ### Title Screen
 
-![BamazonTitleScreen](/assets/images/Title Screen.png)
+![BamazonTitleScreen](/assets/images/'Title Screen.png')
