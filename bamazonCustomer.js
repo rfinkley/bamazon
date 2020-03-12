@@ -48,7 +48,7 @@ function start() {
             name: "option",
             type: "list",
             message: "What would you like to do?",
-            choices: ["ORDER", "VIEW INVENTORY", "EXIT"]
+            choices: ["ORDER", "EXIT"]
         })
         .then(function (answer) {
             // based on their answer, either call the bid or the post functions
