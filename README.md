@@ -49,3 +49,11 @@ UCF Bootcamp Homework - Build a node cli app called Bamazon
 ### Title Screen
 
 ![BamazonTitleScreen](/assets/images/TitleScreen.png)
+
+### Insufficient Stock
+
+![InsufficientStock](/assets/images/InsufficientStock.png)
+
+### Order Placed
+
+![InsufficientStock](/assets/images/OrderPlaced.png)
