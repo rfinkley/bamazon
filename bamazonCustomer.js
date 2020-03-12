@@ -1,27 +1,11 @@
-// 5. Then create a Node application called `bamazonCustomer.js`. Running this application will first display all of the items available for sale. Include the ids, names, and prices of products for sale.
-
-// 6. The app should then prompt users with two messages.
-
-//    * The first should ask them the ID of the product they would like to buy.
-//    * The second message should ask how many units of the product they would like to buy.
-
-// 7. Once the customer has placed the order, your application should check if your store has enough of the product to meet the customer's request.
-
-//    * If not, the app should log a phrase like `Insufficient quantity!`, and then prevent the order from going through.
-
-// 8. However, if your store _does_ have enough of the product, you should fulfill the customer's order.
-//    * This means updating the SQL database to reflect the remaining quantity.
-//    * Once the update goes through, show the customer the total cost of their purchase.
-
-
-// * If this activity took you between 8-10 hours, then you've put enough time into this assignment. Feel free to stop here -- unless you want to take on the next challenge.
-
 const chalk = require('chalk');
 const clear = require('clear');
 const figlet = require('figlet');
-const inq = require('inquirer');
+const inquirer = require('inquirer');
 const mysql = require("mysql");
+const cTable = require('console.table');
 
+// Create connection mysql database
 var connection = mysql.createConnection({
     host: "localhost",
 
@@ -36,6 +20,7 @@ var connection = mysql.createConnection({
     database: "bamazon"
 });
 
+//Use figlet and chalk to create a screen title
 clear();
 console.log(
     chalk.yellowBright(
@@ -45,16 +30,38 @@ console.log(
     )
 );
 
+// Create a function to display all items in products table
 function allItems() {
     connection.query('SELECT * FROM products', function (error, results) {
         if (error) throw error;
         console.log('\n');
         console.log(chalk.blue.bgBlack.bold('Check out the goods!'));
-        console.table(results);
-        connection.end();
-        });
-    }
+        const table = cTable.getTable(results);
+        console.log(table);
+    });
+}
 
+// Create start function with user options
+function start() {
+    inquirer
+        .prompt({
+            name: "option",
+            type: "list",
+            message: "What would you like to do?",
+            choices: ["ORDER", "VIEW INVENTORY", "EXIT"]
+        })
+        .then(function (answer) {
+            // based on their answer, either call the bid or the post functions
+            if (answer.option === "ORDER") {
+                order();
+            } else {
+                connection.end();
+            }
+        });
+}
+
+
+// Create function that allows user to place an order
 function order() {
     var questions = [{
             type: 'number',
@@ -67,7 +74,7 @@ function order() {
             message: "How many do you want?",
         }
     ];
-    inq.prompt(questions).then(answers => {
+    inquirer.prompt(questions).then(answers => {
         connection
             .query('SELECT * FROM products WHERE item_id = ?', [answers.productID], function (error, res) {
                 if (error) throw error;
@@ -75,26 +82,39 @@ function order() {
                 if (stock < answers.qty) {
                     console.log(chalk.redBright('Insufficent Stock'));
                     allItems();
+                    connection.end();
                 } else {
                     stockUpdate = stock - answers.qty;
-                    connection.query('UPDATE products SET ? WHERE ?', [{
-                        stock_quantity: stockUpdate
-                    },
-                    {
-                        item_id: answers.productID
-                    }
-                ], function (err, res) {
-                    if (err) throw err;
+                    console.log('Order Details:');
+                    let order = {
+                        prdName: res[0].product_name,
+                        price: res[0].price,
+                        qtyOrdered: answers.qty,
+                        total: answers.qty * res[0].price
+                    };
                     console.log("Order Placed");
-                    allItems();
-                });
-                return stock;
+                    console.log('Product: ' + order.prdName);
+                    console.log('Price: ' + order.price);
+                    console.log('Quantity: ' + answers.qty);
+                    console.log('Total: $' + order.total);
+                    connection.query('UPDATE products SET ? WHERE ?', [{
+                            stock_quantity: stockUpdate
+                        },
+                        {
+                            item_id: answers.productID
+                        }
+                    ], function (err) {
+                        if (err) throw err;
+                        allItems();
+                        connection.end();
+                    });
                 }
             });
     });
 }
 
+// Open connection and call start function
 connection.connect(function (err) {
     if (err) throw err;
-    order();
+    start();
 });
